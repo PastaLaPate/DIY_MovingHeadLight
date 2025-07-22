@@ -67,9 +67,12 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
 
 // WebSocket event handler
 void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len) {
+  String msg; // Declare outside switch to avoid bypassing initialization
   switch (type) {
     case WS_EVT_CONNECT:
       Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
+      msg = "{\"message\":\"Connected successfully\",\"clientId\":" + String(client->id()) + "}";
+      client->text(msg);
       break;
     case WS_EVT_DISCONNECT:
       Serial.printf("WebSocket client #%u disconnected\n", client->id());
