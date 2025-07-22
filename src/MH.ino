@@ -1,21 +1,13 @@
+#include <SECRETS.h>
+#include <SETTINGS.h>
+
 #include <WiFi.h>
 #include <ESPAsyncWebServer.h>
 #include <ArduinoJson.h>
 #include <Servo.h>
 
-// ***** WiFi Credentials *****
-const char* ssid     = "xxx";
-const char* password = "xxx";
-
-// ***** Servo Pins and Objects *****
-int baseServoPin = 14;
-int topServoPin  = 12;
+// ***** Servo *****
 Servo servo;
-
-// ***** LED Pin Definitions *****
-const int redPin   = 26;
-const int greenPin = 25;
-const int bluePin  = 27;
 
 // ***** LED PWM Channel Configuration *****
 const int redChannel    = 0;
@@ -25,7 +17,7 @@ const int pwmFreq       = 5000;
 const int pwmResolution = 8;
 
 // WebSocket server on port 81
-AsyncWebServer server(81);
+AsyncWebServer server(PORT);
 AsyncWebSocket ws("/ws");
 
 // Function to smoothly move a servo (adjust speed as needed)
@@ -56,10 +48,10 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
     const char* servoName = doc["servo"];
     if (strcmp(servoName, "top") == 0) {
       Serial.printf("Moving top servo to %d°\n", angle);
-      moveServo(topServoPin, angle);
+      moveServo(TOP_SERVO_PIN, angle);
     } else if (strcmp(servoName, "base") == 0) {
       Serial.printf("Moving base servo to %d°\n", angle);
-      moveServo(baseServoPin, angle);
+      moveServo(BASE_SERVO_PIN, angle);
     }
   }
 
@@ -97,8 +89,8 @@ void setup() {
   delay(1000);
 
   // Connect to WiFi
-  Serial.printf("Connecting to %s\n", ssid);
-  WiFi.begin(ssid, password);
+  Serial.printf("Connecting to %s\n", WIFI_SSID);
+  WiFi.begin(WIFI_SSID, WIFI_PSWD);
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
     Serial.print(".");
@@ -111,13 +103,13 @@ void setup() {
   ledcSetup(redChannel, pwmFreq, pwmResolution);
   ledcSetup(greenChannel, pwmFreq, pwmResolution);
   ledcSetup(blueChannel, pwmFreq, pwmResolution);
-  ledcAttachPin(redPin, redChannel);
-  ledcAttachPin(greenPin, greenChannel);
-  ledcAttachPin(bluePin, blueChannel);
+  ledcAttachPin(RED_PIN, redChannel);
+  ledcAttachPin(GREEN_PIN, greenChannel);
+  ledcAttachPin(BLUE_PIN, blueChannel);
 
   // Attach servos
-  servo.attach(topServoPin, 4);
-  servo.attach(baseServoPin, 5);
+  servo.attach(TOP_SERVO_PIN, 4);
+  servo.attach(BASE_SERVO_PIN, 5);
 
   // Start WebSocket server
   ws.onEvent(onWebSocketEvent);
