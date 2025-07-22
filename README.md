@@ -22,7 +22,11 @@ ESP32 Or any compatible board (might need to change pin numbers in the code & Pl
 > [!NOTE]
 > Make sure to use a power supply that can provide enough current for the servos, as they can draw significant current when moving. A separate power supply for the servos is recommended. W/ Common GND
 
-- 1 RGB LED (common anode) or 3 individual LEDs (red, green, blue)
+- 1 RGB LED (common anode or common cathode) or 3 individual LEDs (red, green, blue)
+- If rgb common anode:
+  - 3 IRLZ44N MOSFETs (or similar) for each color channel
+- Else:
+  - Just skip the MOSFETs in the circuit.
 - 1 Resistor for each LED (220 ohm)
 - Breadboard and jumper wires Or PCB
 
