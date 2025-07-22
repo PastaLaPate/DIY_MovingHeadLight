@@ -6,6 +6,9 @@ This is a DIY Moving Head project using an ESP32, servos, and RGB LEDs. The proj
 
 You will need vscode w/ PlatformIO installed to build and upload the code to your ESP32.
 
+A 3D Printer is recommended to print the parts, but you can also print the parts online.
+You can find the 3D models on [Printables](https://www.thingiverse.com/thing:6046260) or see last version (might be unstable / broken) on [AutoDesk Fusion HUB](https://a360.co/3TOygQn).
+
 Circuit:
 ESP32 Or any compatible board (might need to change pin numbers in the code & PlatformIO project)
 
