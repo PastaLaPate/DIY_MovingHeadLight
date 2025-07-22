@@ -1,5 +1,10 @@
 # MovingHead DIY
 
+[![License](https://img.shields.io/badge/License-CC_BY--NC_4.0-green?link=https%3A%2F%2Fcreativecommons.org%2Flicenses%2Fby-nc-sa%2F4.0%2F%20)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/PastaLaPate/DIY_MovingHeadLight)
+![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-pr/PastaLaPate/DIY_MovingHeadLight)
+![GitHub top language](https://img.shields.io/github/languages/top/PastaLaPate/DIY_MovingHeadLight)
+
 This is a DIY Moving Head project using an ESP32, servos, and RGB LEDs. The project allows you to control the position of the servos and the color of the LEDs via WebSocket.
 
 ## Requirements
@@ -7,7 +12,7 @@ This is a DIY Moving Head project using an ESP32, servos, and RGB LEDs. The proj
 You will need vscode w/ PlatformIO installed to build and upload the code to your ESP32.
 
 A 3D Printer is recommended to print the parts, but you can also print the parts online.
-You can find the 3D models on [Printables](https://www.thingiverse.com/thing:6046260) or see last version (might be unstable / broken) on [AutoDesk Fusion HUB](https://a360.co/457yoQi).
+You can find the 3D models on [Printables](https://www.printables.com/model/1362122-diy-moving-head-led-beam-light) or see last version (might be unstable / broken) on [AutoDesk Fusion HUB](https://a360.co/457yoQi).
 
 Circuit:
 ESP32 Or any compatible board (might need to change pin numbers in the code & PlatformIO project)
