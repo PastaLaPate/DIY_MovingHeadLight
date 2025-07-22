@@ -45,6 +45,12 @@ ESP32 Or any compatible board (might need to change pin numbers in the code & Pl
 
    ![CircuitDiagram](https://raw.githubusercontent.com/PastaLaPate/DIY_MovingHeadLight/master/imgs/breadboard_circuit.png)
 
+4. Print the 3D models and assemble the moving head.
+
+You can use ![Light Show Controller](https://github.com/PastaLaPate/Lightshow) to create light shows and control the moving head depending of the current music.
+
+## Custom control
+
 You can now open a WebSocket connection to `ws://<your-esp32-ip>:<port>/ws` to control the servos and LEDs. Port is defined in `src/SETTINGS.h` (default is 81). 3. Use the WebSocket client to send JSON commands to control the servos and LEDs.
 JSON Body for controlling servo:
 
