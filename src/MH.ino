@@ -115,7 +115,7 @@ void setup() {
   ws.onEvent(onWebSocketEvent);
   server.addHandler(&ws);
   server.begin();
-  Serial.println("WebSocket server started on port 81");
+  Serial.printf("WebSocket server started on port %d \r\n", PORT);
 }
 
 // ***** Main Loop *****
