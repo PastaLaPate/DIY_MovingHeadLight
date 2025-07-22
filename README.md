@@ -17,7 +17,7 @@ JSON Body for controlling servo:
 
 ```json
 {
-  "servo": "top" | "base",
+  "servo": "top", // "top" or "base"
   "angle": 90 // angle in degrees
 }
 ```
