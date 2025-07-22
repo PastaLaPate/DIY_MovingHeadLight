@@ -27,7 +27,11 @@ ESP32 Or any compatible board (might need to change pin numbers in the code & Pl
   - 3 IRLZ44N MOSFETs (or similar) for each color channel
 - Else:
   - Just skip the MOSFETs in the circuit.
-- 1 Resistor for each LED (220 ohm)
+- 1 220 Ohm Resistor for each LED data line
+- Between Mosfet drain & LED cathode/anode See `src/SETTINGS.h` for calculating the resistor values, assuming default values + 5V power supply:
+  - Red: 150 Ohm
+  - Green: 100 Ohm
+  - Blue: 100 Ohm
 - Breadboard and jumper wires Or PCB
 
 > [!NOTE]
