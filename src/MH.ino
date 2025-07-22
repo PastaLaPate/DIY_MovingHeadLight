@@ -13,7 +13,7 @@ Servo servo;
 const int redChannel    = 0;
 const int greenChannel  = 1;
 const int blueChannel   = 2;
-const int pwmFreq       = 5000;
+const int pwmFreq       = 2500;
 const int pwmResolution = 8;
 
 // WebSocket server on port 81
