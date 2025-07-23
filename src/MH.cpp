@@ -8,15 +8,10 @@
 #include <ArduinoJson.h>
 #include <Servo.h>
 
+#include "LedUtils.h"
+
 // ***** Servo *****
 Servo servo;
-
-// ***** LED PWM Channel Configuration *****
-const int redChannel = 0;
-const int greenChannel = 1;
-const int blueChannel = 2;
-const int pwmFreq = 2500;
-const int pwmResolution = 8;
 
 // WebSocket server on port 81
 AsyncWebServer server(PORT);
@@ -26,25 +21,6 @@ AsyncWebSocket ws("/ws");
 void moveServo(int pin, int angle)
 {
   servo.write(pin, angle, 2000, 0);
-}
-
-// Set the color of the LED
-void setColor(int redValue, int greenValue, int blueValue)
-{
-  ledcWrite(redChannel, redValue);
-  ledcWrite(greenChannel, greenValue);
-  ledcWrite(blueChannel, blueValue);
-}
-
-void flicker(int redValue, int greenValue, int blueValue, int duration)
-{
-  for (int i = 0; i < duration; i += 100)
-  {
-    setColor(redValue, greenValue, blueValue);
-    delay(25);
-    setColor(0, 0, 0); // Turn off
-    delay(25);
-  }
 }
 
 // Handle incoming WebSocket messages
@@ -87,6 +63,21 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
       int flickerDuration = doc["flicker"];
       Serial.printf("Flickering LED color R:%d, G:%d, B:%d for %d ms\n", r, g, b, flickerDuration);
       flicker(r, g, b, flickerDuration);
+    }
+    else if (doc.containsKey("fade"))
+    {
+      int fadeDuration = doc["fade"];
+      int fr = 0;
+      int fg = 0;
+      int fb = 0;
+      if (doc.containsKey("from"))
+      {
+        fr = doc["from"]["r"];
+        fg = doc["from"]["g"];
+        fb = doc["from"]["b"];
+      }
+      Serial.printf("Fading LED color to R:%d, G:%d, B:%d over %d ms\n", r, g, b, fadeDuration);
+      fadeToColor(fr, fg, fb, r, g, b, fadeDuration, EASE_IN_QUART);
     }
     else
     {
@@ -137,13 +128,7 @@ void setup()
   Serial.print("Connected! IP address: ");
   Serial.println(WiFi.localIP());
 
-  // Initialize LED PWM channels
-  ledcSetup(redChannel, pwmFreq, pwmResolution);
-  ledcSetup(greenChannel, pwmFreq, pwmResolution);
-  ledcSetup(blueChannel, pwmFreq, pwmResolution);
-  ledcAttachPin(RED_PIN, redChannel);
-  ledcAttachPin(GREEN_PIN, greenChannel);
-  ledcAttachPin(BLUE_PIN, blueChannel);
+  setupLEDPWM(RED_PIN, GREEN_PIN, BLUE_PIN);
 
   // Attach servos
   servo.attach(TOP_SERVO_PIN, 4);

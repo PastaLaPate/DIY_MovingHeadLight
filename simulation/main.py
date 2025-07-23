@@ -22,6 +22,12 @@ SIMULATOR_STATE = {
     "led_color": (1.0, 1.0, 1.0),
     "flicker_end_time": 0,
     "flicker_base_color": (1.0, 1.0, 1.0),
+    # Fade state
+    "fade_active": False,
+    "fade_start_color": (1.0, 1.0, 1.0),
+    "fade_end_color": (1.0, 1.0, 1.0),
+    "fade_start_time": 0,
+    "fade_duration": 0,
 }
 
 SMOOTH_SPEED = 360.0  # degrees per second
@@ -122,7 +128,7 @@ def approach(cur, tgt, max_delta):
 def main():
     pygame.init()
     display = (1000, 800)
-    pygame.display.set_mode(display, DOUBLEBUF | OPENGL)
+    pygame.display.set_mode(display, DOUBLEBUF | OPENGL | RESIZABLE)
     pygame.display.set_caption("Moving Head Simulator")
 
     # Projection
@@ -164,6 +170,14 @@ def main():
             if e.type == QUIT or (e.type == KEYDOWN and e.key == K_ESCAPE):
                 pygame.quit()
                 sys.exit()
+            if e.type == VIDEORESIZE:
+                display = e.size
+                pygame.display.set_mode(display, DOUBLEBUF | OPENGL | RESIZABLE)
+                glViewport(0, 0, display[0], display[1])
+                glMatrixMode(GL_PROJECTION)
+                glLoadIdentity()
+                gluPerspective(45, display[0] / display[1], 0.1, 50.0)
+                glMatrixMode(GL_MODELVIEW)
             if e.type == MOUSEBUTTONDOWN:
                 if e.button == 1:
                     mouse_down = True
@@ -180,7 +194,7 @@ def main():
                 cam_pitch += dy * 0.2
                 last_mouse = e.pos
 
-        # Process all pending WS commands
+                # Process all pending WS commands
         while not command_queue.empty():
             cmd = command_queue.get_nowait()
             if "servo" in cmd and "angle" in cmd:
@@ -196,9 +210,20 @@ def main():
                         cmd["flicker"]
                     )
                     SIMULATOR_STATE["flicker_base_color"] = (r, g, b)
+                    SIMULATOR_STATE["fade_active"] = False  # Cancel fade if flicker
+                elif "fade" in cmd:
+                    duration = int(cmd["fade"])
+                    now = pygame.time.get_ticks()
+                    SIMULATOR_STATE["fade_active"] = True
+                    SIMULATOR_STATE["fade_start_color"] = SIMULATOR_STATE["led_color"]
+                    SIMULATOR_STATE["fade_end_color"] = (r, g, b)
+                    SIMULATOR_STATE["fade_start_time"] = now
+                    SIMULATOR_STATE["fade_duration"] = duration
+                    SIMULATOR_STATE["flicker_end_time"] = 0  # Cancel flicker if fade
                 else:
                     SIMULATOR_STATE["led_color"] = (r, g, b)
                     SIMULATOR_STATE["flicker_end_time"] = 0
+                    SIMULATOR_STATE["fade_active"] = False
 
         # Flicker logic
         now = pygame.time.get_ticks()
@@ -207,6 +232,19 @@ def main():
                 SIMULATOR_STATE["led_color"] = SIMULATOR_STATE["flicker_base_color"]
             else:
                 SIMULATOR_STATE["led_color"] = (0, 0, 0)
+        elif SIMULATOR_STATE.get("fade_active", False):
+            t = now - SIMULATOR_STATE["fade_start_time"]
+            duration = SIMULATOR_STATE["fade_duration"]
+            if t >= duration:
+                SIMULATOR_STATE["led_color"] = SIMULATOR_STATE["fade_end_color"]
+                SIMULATOR_STATE["fade_active"] = False
+            else:
+                f = t / duration if duration > 0 else 1.0
+                sc = SIMULATOR_STATE["fade_start_color"]
+                ec = SIMULATOR_STATE["fade_end_color"]
+                SIMULATOR_STATE["led_color"] = tuple(
+                    sc[i] + (ec[i] - sc[i]) * f for i in range(3)
+                )
 
         # Clear frame
         glClearColor(0.1, 0.15, 0.2, 1)
