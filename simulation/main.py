@@ -215,7 +215,14 @@ def main():
                     duration = int(cmd["fade"])
                     now = pygame.time.get_ticks()
                     SIMULATOR_STATE["fade_active"] = True
-                    SIMULATOR_STATE["fade_start_color"] = SIMULATOR_STATE["led_color"]
+                    fr, fg, fb = SIMULATOR_STATE["led_color"]
+                    if cmd["from"]:
+                        fr, fg, fb = (
+                            cmd["from"]["r"] / 255.0,
+                            cmd["from"]["g"] / 255.0,
+                            cmd["from"]["b"] / 255.0,
+                        )
+                    SIMULATOR_STATE["fade_start_color"] = (fr, fg, fb)
                     SIMULATOR_STATE["fade_end_color"] = (r, g, b)
                     SIMULATOR_STATE["fade_start_time"] = now
                     SIMULATOR_STATE["fade_duration"] = duration
@@ -239,7 +246,8 @@ def main():
                 SIMULATOR_STATE["led_color"] = SIMULATOR_STATE["fade_end_color"]
                 SIMULATOR_STATE["fade_active"] = False
             else:
-                f = t / duration if duration > 0 else 1.0
+                # Quartic ease-in
+                f = (t / duration) ** 4 if duration > 0 else 1.0
                 sc = SIMULATOR_STATE["fade_start_color"]
                 ec = SIMULATOR_STATE["fade_end_color"]
                 SIMULATOR_STATE["led_color"] = tuple(
