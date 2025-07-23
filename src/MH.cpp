@@ -36,6 +36,17 @@ void setColor(int redValue, int greenValue, int blueValue)
   ledcWrite(blueChannel, blueValue);
 }
 
+void flicker(int redValue, int greenValue, int blueValue, int duration)
+{
+  for (int i = 0; i < duration; i += 100)
+  {
+    setColor(redValue, greenValue, blueValue);
+    delay(25);
+    setColor(0, 0, 0); // Turn off
+    delay(25);
+  }
+}
+
 // Handle incoming WebSocket messages
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
 {
@@ -71,8 +82,17 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
     int r = doc["led"]["r"];
     int g = doc["led"]["g"];
     int b = doc["led"]["b"];
-    Serial.printf("Setting LED color to R:%d, G:%d, B:%d\n", r, g, b);
-    setColor(r, g, b);
+    if (doc.containsKey("flicker"))
+    {
+      int flickerDuration = doc["flicker"];
+      Serial.printf("Flickering LED color R:%d, G:%d, B:%d for %d ms\n", r, g, b, flickerDuration);
+      flicker(r, g, b, flickerDuration);
+    }
+    else
+    {
+      Serial.printf("Setting LED color to R:%d, G:%d, B:%d\n", r, g, b);
+      setColor(r, g, b);
+    }
   }
 }
 
