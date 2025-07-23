@@ -1,0 +1,4 @@
+pygame
+PyOpenGL
+websockets
+asyncio
