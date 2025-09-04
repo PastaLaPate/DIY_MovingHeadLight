@@ -5,6 +5,23 @@
 #define PWM_FREQ 2500
 #define PWM_RESOLUTION 8
 
+// LED Resistor calculations
+#define VIN_VOLTAGE 5
+
+// U=I*R
+// R=U/I
+// I = 20mA = 0.02A
+
+#define CHANNEL_CONSUMTION 0.02 // In Amperes-
+
+#define RED_MAX_VOLT 2.1   // In volts
+#define GREEN_MAX_VOLT 3.1 // In volts
+#define BLUE_MAX_VOLT 3.1  // In volts
+
+#define RED_RESISTOR (VIN_VOLTAGE - RED_MAX_VOLT) / CHANNEL_CONSUMTION     // 145=~150
+#define GREEN_RESISTOR (VIN_VOLTAGE - GREEN_MAX_VOLT) / CHANNEL_CONSUMTION // 95=~100
+#define BLUE_RESISTOR (VIN_VOLTAGE - BLUE_MAX_VOLT) / CHANNEL_CONSUMTION   // 95=~100
+
 enum FadeType
 {
   LINEAR,

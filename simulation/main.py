@@ -125,6 +125,75 @@ def approach(cur, tgt, max_delta):
     return cur + math.copysign(max_delta, d)
 
 
+def draw_spot_cone_volumetric(
+    base_radius=0.35, length=4.0, slices=36, rings=12, color=(1.0, 1.0, 1.0, 0.25)
+):
+    """
+    Volumetric-ish cone:
+    - rings = number of radial rings along the cone length (increase for smoother volume)
+    - slices = segments around the circle
+    - uses additive blending so the beam looks bright in the air
+    - keeps depth test enabled but disables depth writes so it is occluded by opaque geometry
+    """
+    lr, lg, lb, a0 = color
+    glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_CURRENT_BIT)
+    glEnable(GL_BLEND)
+    # Additive blending tends to look more like light in the air:
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE)
+
+    # We want the cone to be occluded by scene geometry, so KEEP depth test enabled,
+    # but do not write into the depth buffer while rendering the cone.
+    # (This lets opaque geometry occlude the cone.)
+    glDepthMask(GL_FALSE)
+
+    glDisable(GL_LIGHTING)  # cone is self-lit
+    # Create rings from base (0) to tip (length). radius decreases linearly.
+    for r in range(rings):
+        z0 = -(r / rings) * length
+        z1 = -((r + 1) / rings) * length
+        rad0 = base_radius * (1.0 - r / rings)
+        rad1 = base_radius * (1.0 - (r + 1) / rings)
+
+        # alpha falloff: stronger near the base, weaker toward the tip
+        alpha0 = a0 * (1.0 - (r / rings) * 0.9)  # tweak falloff factor as desired
+        alpha1 = a0 * (1.0 - ((r + 1) / rings) * 0.95)
+
+        glBegin(GL_TRIANGLE_STRIP)
+        for s in range(slices + 1):
+            theta = (s / float(slices)) * 2.0 * math.pi
+            x0 = math.cos(theta) * rad0
+            y0 = math.sin(theta) * rad0
+            x1 = math.cos(theta) * rad1
+            y1 = math.sin(theta) * rad1
+
+            # Outer color (base of strip)
+            glColor4f(lr, lg, lb, alpha0)
+            glVertex3f(x0, y0, z0)
+
+            # Inner color (next ring)
+            glColor4f(lr, lg, lb, alpha1)
+            glVertex3f(x1, y1, z1)
+        glEnd()
+
+    # Optionally draw a faint disk at the base for a stronger origin glow:
+    glBegin(GL_TRIANGLE_FAN)
+    glColor4f(lr, lg, lb, a0 * 0.6)
+    glVertex3f(0.0, 0.0, 0.0)
+    for s in range(slices + 1):
+        theta = (s / float(slices)) * 2.0 * math.pi
+        x = math.cos(theta) * base_radius
+        y = math.sin(theta) * base_radius
+        glColor4f(lr, lg, lb, a0 * 0.35)
+        glVertex3f(x, y, 0.0)
+    glEnd()
+
+    # restore
+    glDepthMask(GL_TRUE)
+    glDisable(GL_BLEND)
+    glEnable(GL_LIGHTING)
+    glPopAttrib()
+
+
 def main():
     pygame.init()
     display = (1000, 800)
@@ -139,8 +208,30 @@ def main():
     glDepthFunc(GL_LEQUAL)
 
     glEnable(GL_LIGHTING)
-    glEnable(GL_LIGHT0)
+    glEnable(GL_LIGHT0)  # ambient/world fill light
     glEnable(GL_COLOR_MATERIAL)
+    glShadeModel(GL_SMOOTH)
+    glEnable(GL_NORMALIZE)  # keep normals normalized after transforms
+
+    # Reduce global ambient so the spotlight is more visible
+    glLightfv(GL_LIGHT0, GL_AMBIENT, (0.05, 0.05, 0.05, 1.0))
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, (0.25, 0.25, 0.25, 1.0))
+    glLightfv(GL_LIGHT0, GL_SPECULAR, (0.05, 0.05, 0.05, 1.0))
+
+    # --- enable a second light that we'll use as the spotlight ---
+    glEnable(GL_LIGHT1)
+
+    # Configure static properties for LIGHT1 (others will be updated each frame)
+    # Tuned for stronger, longer-reaching beam:
+    glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 0.6)
+    glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.02)
+    glLightf(GL_LIGHT1, GL_QUADRATIC_ATTENUATION, 0.002)
+    glLightf(GL_LIGHT1, GL_SPOT_CUTOFF, 35.0)  # wider cone (degrees)
+    glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 10.0)  # less extreme focus
+
+    # Default material properties to show specular highlights
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, (1.0, 1.0, 1.0, 1.0))
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, 64.0)
 
     # Camera state
     cam_yaw = 0.0
@@ -255,7 +346,7 @@ def main():
                 )
 
         # Clear frame
-        glClearColor(0.1, 0.15, 0.2, 1)
+        glClearColor(0.03, 0.05, 0.08, 1)  # slightly darker background helps visibility
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
 
         # Camera transform
@@ -265,7 +356,7 @@ def main():
         glRotatef(cam_yaw, 0, 1, 0)
 
         # Draw ground
-        glColor3f(0.3, 0.3, 0.35)
+        glColor3f(0.22, 0.22, 0.25)
         glBegin(GL_QUADS)
         glNormal3f(0, 1, 0)
         glVertex3f(-10, -0.5, 10)
@@ -292,13 +383,60 @@ def main():
 
         # Head tilt
         glTranslatef(0, 0.4, 0)
-        head_rot = SIMULATOR_STATE["head_current"]
-        glColor3fv(SIMULATOR_STATE["led_color"])
+
+        # --- Spotlight placement & head rendering ---
         glPushMatrix()
-        glTranslatef(0, 0.2, 0)  # pivot at bottom of head
-        glRotatef(head_rot, 0, 0, 1)
-        draw_box(w=0.8, h=0.4, d=0.5)
+        # pivot at bottom of head (same pivot used when rotating head)
+        glTranslatef(0, 0.2, 0)
+        head_rot = SIMULATOR_STATE["head_current"]
+        glRotatef(head_rot, 1, 0, 0)
+
+        # Move the light forward from the pivot so it sits at the head "front".
+        # Increased forward offset so the light is not buried inside geometry.
+        glTranslatef(0, 0.0, 0)  # tweak this to move the lamp forward/back
+
+        # Get current LED color and apply to GL_LIGHT1
+        lr, lg, lb = SIMULATOR_STATE["led_color"]
+
+        # Amplify diffuse a bit so the light appears stronger
+        diffuse = (min(lr * 4.0, 3.0), min(lg * 4.0, 3.0), min(lb * 4.0, 3.0), 1.0)
+        specular = (min(lr * 4.0, 3.0), min(lg * 4.0, 3.0), min(lb * 4.0, 3.0), 1.0)
+        ambient = (lr * 0.02, lg * 0.02, lb * 0.02, 1.0)
+
+        glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse)
+        glLightfv(GL_LIGHT1, GL_SPECULAR, specular)
+        glLightfv(GL_LIGHT1, GL_AMBIENT, ambient)
+
+        # Position uses current modelview: set as positional light (w=1)
+        glLightfv(GL_LIGHT1, GL_POSITION, (0.0, 0.0, 0.0, 1.0))
+
+        # Spotlight direction in the head's local coordinates: pointing toward -Z (forward)
+        glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, (0.0, 0.0, -1.0))
+
+        # Give the head a slight emission so it looks like a lamp head (small glow)
+        glMaterialfv(
+            GL_FRONT_AND_BACK, GL_EMISSION, (lr * 0.25, lg * 0.25, lb * 0.25, 1.0)
+        )
+
+        # Draw the head box (now lit by LIGHT1)
+        glColor3f(
+            0.9, 0.9, 0.9
+        )  # neutral head color; actual appearance comes from lighting
+        glPushMatrix()
+        draw_box(w=0.5, h=0.4, d=1.2)
         glPopMatrix()
+
+        # Draw visible beam/cone so you can actually see the light
+        # Place origin at light position and draw cone extending forward (-Z)
+        # We'll draw a cone length tuned to reach the floor: ~3.5 units
+        draw_spot_cone_volumetric(
+            base_radius=0.35, length=4.0, slices=36, color=(lr, lg, lb, 0.15)
+        )
+
+        # reset emission to zero for subsequent geometry
+        glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, (0.0, 0.0, 0.0, 1.0))
+
+        glPopMatrix()  # end head transform / light placement
 
         glPopMatrix()
 
