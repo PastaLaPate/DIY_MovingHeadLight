@@ -34,7 +34,7 @@ void flicker(int redValue, int greenValue, int blueValue, int duration)
 
 void fadeToColor(int rFrom, int gFrom, int bFrom, int rTarget, int gTarget, int bTarget, int durationMs, FadeType fadeType)
 {
-  int steps = 50; // Number of steps in the fade
+  int steps = 15; // Number of steps in the fade
   int delayMs = durationMs / steps;
 
   float rStep = (rTarget - rFrom) / float(steps);
@@ -43,25 +43,17 @@ void fadeToColor(int rFrom, int gFrom, int bFrom, int rTarget, int gTarget, int 
 
   for (int i = 1; i <= steps; ++i)
   {
-    int t;
-    switch (fadeType)
-    {
-    case LINEAR:
-      t = i;
-      break;
-    case EASE_IN_QUAD:
-      t = i * i / (steps * steps);
-      break;
-    case EASE_IN_CUBIC:
-      t = i * i * i / (steps * steps * steps);
-      break;
-    case EASE_IN_QUART:
-      t = i * i * i * i / (steps * steps * steps * steps);
-      break;
+    float progress = float(i) / steps;
+    float ease;
+    switch (fadeType) {
+      case LINEAR:        ease = progress; break;
+      case EASE_IN_QUAD:  ease = progress * progress; break;
+      case EASE_IN_CUBIC: ease = progress * progress * progress; break;
+      case EASE_IN_QUART: ease = progress * progress * progress * progress; break;
     }
-    int r = rFrom + rStep * t;
-    int g = gFrom + gStep * t;
-    int b = bFrom + bStep * t;
+    int r = rFrom + (rTarget - rFrom) * ease;
+    int g = gFrom + (gTarget - gFrom) * ease;
+    int b = bFrom + (bTarget - bFrom) * ease;
     setColor(r, g, b);
     delay(delayMs);
   }

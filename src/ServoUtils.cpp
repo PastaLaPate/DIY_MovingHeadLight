@@ -1,6 +1,8 @@
 #include <SETTINGS.h>
 #include <ServoUtils.h>
 
+Servo servo;
+
 void initServo()
 {
   // Attach servos

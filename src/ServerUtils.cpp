@@ -2,6 +2,10 @@
 #include <ServoUtils.h>
 #include <LedUtils.h>
 
+// WebSocket server on port 81
+AsyncWebServer server(PORT);
+AsyncWebSocket ws("/ws");
+
 // Handle incoming WebSocket messages
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
 {
@@ -15,41 +19,44 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len)
   }
 
   // Handle servo commands
-  if (doc.containsKey("servo") && doc.containsKey("angle"))
+  if (doc["servo"].is<JsonArray>())
   {
-    int angle = doc["angle"];
-    const char *servoName = doc["servo"];
-    if (strcmp(servoName, "top") == 0)
-    {
-      Serial.printf("Moving top servo to %d°\n", angle);
-      moveServo(TOP_SERVO_PIN, angle);
-    }
-    else if (strcmp(servoName, "base") == 0)
-    {
-      Serial.printf("Moving base servo to %d°\n", angle);
-      moveServo(BASE_SERVO_PIN, angle);
+    JsonArray servoCommands = doc["servo"];
+    for (JsonObject command : servoCommands) {
+      int angle = command["angle"];
+      const char *servoName = command["servo"];
+      if (strcmp(servoName, "top") == 0)
+      {
+        //Serial.printf("Moving top servo to %d°\n", angle);
+        moveServo(TOP_SERVO_PIN, angle);
+      }
+      else if (strcmp(servoName, "base") == 0)
+      {
+        //Serial.printf("Moving base servo to %d°\n", angle);
+        moveServo(BASE_SERVO_PIN, angle);
+      }
     }
   }
 
   // Handle LED color command
-  if (doc.containsKey("led"))
+  if (doc["led"].is<JsonObject>())
   {
     int r = doc["led"]["r"];
     int g = doc["led"]["g"];
     int b = doc["led"]["b"];
-    if (doc.containsKey("flicker"))
+    if (doc["flicker"].is<int>())
     {
       int flickerDuration = doc["flicker"];
-      Serial.printf("Flickering LED color R:%d, G:%d, B:%d for %d ms\n", r, g, b, flickerDuration);
+      //Serial.printf("Flickering LED color R:%d, G:%d, B:%d for %d ms\n", r, g, b, flickerDuration);
       flicker(r, g, b, flickerDuration);
     }
-    else if (doc.containsKey("fade"))
+    else if (doc["fade"].is<int>())
     {
       int fadeDuration = doc["fade"];
       int fr = 0;
       int fg = 0;
       int fb = 0;
-      if (doc.containsKey("from"))
+      if (doc["from"].is<JsonObject>())
       {
         fr = doc["from"]["r"];
         fg = doc["from"]["g"];
@@ -93,11 +100,42 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client, AwsE
   }
 }
 
+void onOTAStart() {
+  Serial.println("[OTA] Starting OTA update...");
+  flicker(0, 0, 255, 500);
+}
+
+unsigned long ota_progress_millis = 0;
+
+void onOTAProgress(size_t current, size_t final) {
+  // Log every 1 second
+  if (millis() - ota_progress_millis > 1000) {
+    ota_progress_millis = millis();
+    flicker(0, 0, 255, 100);
+    Serial.printf("[OTA] Progress Current: %u bytes, Final: %u bytes\n", current, final);
+  }
+}
+
+void onOTAEnd(bool success) {
+  flicker(255, 0, 0, 1000);
+  if (success) {
+    Serial.println("[OTA] OTA update finished successfully!.. Rebooting");
+  } else {
+    Serial.println("There was an error during OTA update!");
+  }
+}
+
 void setupServer()
 {
+  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
+    request->send(200, "text/plain", "Hi! This is ElegantOTA. Go to /update to update.");
+  });
   ws.onEvent(onWebSocketEvent);
   server.addHandler(&ws);
   ElegantOTA.begin(&server);
+  ElegantOTA.onStart(onOTAStart);
+  ElegantOTA.onProgress(onOTAProgress);
+  ElegantOTA.onEnd(onOTAEnd);
   server.begin();
 }
 
