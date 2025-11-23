@@ -17,8 +17,79 @@ import queue
 
 import pygame
 from pygame.locals import *
-from OpenGL.GL import *
-from OpenGL.GLU import *
+from OpenGL.GL import (
+    glPushMatrix,
+    glRotatef,
+    glPopMatrix,
+    glTranslatef,
+    glBegin,
+    GL_QUADS,
+    glEnd,
+    glNormal3fv,
+    glVertex3fv,
+    glPushAttrib,
+    glEnable,
+    glMatrixMode,
+    glBlendFunc,
+    glDepthMask,
+    glDepthFunc,
+    glDisable,
+    glColor4f,
+    glVertex3f,
+    glPopAttrib,
+    glShadeModel,
+    glLightfv,
+    glLightf,
+    glViewport,
+    glMaterialfv,
+    glMaterialf,
+    glLoadIdentity,
+    glClearColor,
+    glClear,
+    glColor3f,
+    glNormal3f,
+    GL_BLEND,
+    GL_ENABLE_BIT,
+    GL_COLOR_BUFFER_BIT,
+    GL_CURRENT_BIT,
+    GL_SRC_ALPHA,
+    GL_ONE,
+    GL_FALSE,
+    GL_LIGHTING,
+    GL_TRIANGLE_STRIP,
+    GL_TRIANGLE_FAN,
+    GL_TRUE,
+    GL_PROJECTION,
+    GL_MODELVIEW,
+    GL_LIGHT0,
+    GL_LEQUAL,
+    GL_DEPTH_TEST,
+    GL_COLOR_MATERIAL,
+    GL_SMOOTH,
+    GL_NORMALIZE,
+    GL_LIGHT1,
+    GL_AMBIENT,
+    GL_DIFFUSE,
+    GL_SPECULAR,
+    GL_CONSTANT_ATTENUATION,
+    GL_LINEAR_ATTENUATION,
+    GL_QUADRATIC_ATTENUATION,
+    GL_SPOT_CUTOFF,
+    GL_SPOT_EXPONENT,
+    GL_FRONT_AND_BACK,
+    GL_SHININESS,
+    GL_DEPTH_BUFFER_BIT,
+    GL_POSITION,
+    GL_SPOT_DIRECTION,
+    GL_EMISSION,
+)
+from OpenGL.GLU import (
+    gluCylinder,
+    gluDisk,
+    gluNewQuadric,
+    gluDeleteQuadric,
+    gluPerspective,
+)
 import websockets
 
 # --- Configuration ----------------------------------------------
@@ -396,6 +467,7 @@ def main():
                 sc = SIMULATOR_STATE["fade_start_color"]
                 ec = SIMULATOR_STATE["fade_end_color"]
                 led_color = tuple(sc[i] + (ec[i] - sc[i]) * f for i in range(3))
+        SIMULATOR_STATE["led_color"] = led_color
 
         # Use led_color for all OpenGL lighting
         lr, lg, lb = led_color
