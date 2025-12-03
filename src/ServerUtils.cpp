@@ -1,6 +1,7 @@
 #include <ServerUtils.h>
 #include <ServoUtils.h>
 #include <LedUtils.h>
+#include <UDPManager.h>
 
 // WebSocket server on port 81
 AsyncWebServer server(PORT);
@@ -132,6 +133,7 @@ void setupServer()
   });
   ws.onEvent(onWebSocketEvent);
   server.addHandler(&ws);
+  setupUDPManager(&server);
   ElegantOTA.begin(&server);
   ElegantOTA.onStart(onOTAStart);
   ElegantOTA.onProgress(onOTAProgress);
