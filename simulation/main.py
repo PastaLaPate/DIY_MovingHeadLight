@@ -7,12 +7,38 @@
 #     { "led": {"r":255,"g":0,"b":0} }
 #     { "led": {"r":..., "g":..., "b":...}, "flicker": 500 }
 #     { "led": {"r":..., "g":..., "b":...}, "fade": 1000, "from": {"r":..., "g":..., "b":...} }
+"""
+
+UDP Packet Structure:
+
+number (32 bits) : Packet ID
+args (in format key=value separated by ;) : Arguments
+
+Arguments:
+Servos:
+- bS : Base Servo Angle
+- tS : Top Servo Angle
+Base RGB:
+- r : LED Red Value (0-255)
+- g : LED Green Value (0-255)
+- b : LED Blue Value (0-255)
+
+Flicker:
+- fl : Flicker Duration (ms)
+
+Fade:
+- fa : Fade Duration (ms)
+- fr : From Red Value (0-255)
+- fg : From Green Value (0-255)
+- fb : From Blue Value (0-255)
+
+"""
 
 import sys
 import math
-import json
 import threading
-import asyncio
+import socket
+from http.server import BaseHTTPRequestHandler, HTTPServer
 import queue
 
 import pygame
@@ -90,7 +116,6 @@ from OpenGL.GLU import (
     gluDeleteQuadric,
     gluPerspective,
 )
-import websockets
 
 # --- Configuration ----------------------------------------------
 WS_HOST = "0.0.0.0"
@@ -116,6 +141,9 @@ SIMULATOR_STATE = {
     "fade_start_time": 0,
     "fade_duration": 0,
 }
+
+# global packet index tracker used by UDP listener and reset endpoint
+udp_last_packet_id = 0
 
 SMOOTH_SPEED = 360.0  # degrees per second
 
@@ -165,77 +193,144 @@ def draw_box(w=1.0, h=0.4, d=0.3):
     glEnd()
 
 
-# --- WebSocket Server Logic ---
+# --- UDP Server Logic ---
 
 
-async def handle_ws(connection):
-    # Accept only requests on the configured path
-    path = connection.request.path
-    if path != WS_PATH:
-        print(f"Rejected connection on invalid path: {path}")
-        await connection.close(code=1002, reason="Invalid path")
+def run_udp_server(host="0.0.0.0", port=1234):
+    """Simple UDP listener that parses the custom ';' separated packet
+    format and pushes normalized command dicts into `command_queue`.
+    Packet format: <packetID>;<key>=<value>;<key>=<value>;...
+    Keys used: bS (base servo), tS (top servo), r,g,b (led), fl (flicker ms),
+    fa (fade ms), fr/fg/fb (from color)
+    """
+    sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    try:
+        sock.bind((host, port))
+    except Exception as e:
+        print(f"UDP bind failed on {host}:{port}: {e}")
         return
 
-    print("Client connected on", path)
-
-    # Send a connected message similar to the ESP32 behaviour
-    try:
-        await connection.send(
-            json.dumps({"message": "Connected successfully", "clientId": "sim"})
-        )
-
-        # Listen for incoming messages
-        async for msg in connection:
-            try:
-                parsed = json.loads(msg)
-            except json.JSONDecodeError:
-                print("Bad JSON:", msg)
+    print(f"UDP server listening on udp://{host}:{port}")
+    global udp_last_packet_id
+    while True:
+        try:
+            data, addr = sock.recvfrom(4096)
+            text = data.decode("utf-8", errors="ignore").strip()
+            if not text:
                 continue
+            tokens = text.split(";")
+            if len(tokens) == 0:
+                continue
+            try:
+                packet_id = int(tokens[0])
+            except Exception:
+                print("Invalid packet id, ignoring:", tokens[0])
+                continue
+            if packet_id <= udp_last_packet_id:
+                print("Duplicate or old packet. Ignoring.")
+                continue
+            udp_last_packet_id = packet_id
 
-            # Normalize commands into individual dicts and push to queue
-            if isinstance(parsed, list):
-                for item in parsed:
-                    command_queue.put(item)
-                    print(item)
-            elif isinstance(parsed, dict):
-                if "servo" in parsed and isinstance(parsed["servo"], list):
-                    for sc in parsed["servo"]:
-                        command_queue.put(sc)
-                if "led" in parsed:
-                    command_queue.put(parsed)
-            else:
-                print("Unsupported JSON root type:", type(parsed))
+            args = {}
+            for t in tokens[1:]:
+                if "=" in t:
+                    k, v = t.split("=", 1)
+                    args[k] = v
 
-    finally:
-        print("Client disconnected")
+            # Debug
+            print("UDP args:", args)
+
+            # Map args into command_queue items similar to WebSocket handler
+            if "bS" in args:
+                try:
+                    ang = float(args["bS"])
+                    command_queue.put({"servo": "base", "angle": ang})
+                except Exception:
+                    pass
+            if "tS" in args:
+                try:
+                    ang = float(args["tS"])
+                    command_queue.put({"servo": "top", "angle": ang})
+                except Exception:
+                    pass
+
+            if "r" in args and "g" in args and "b" in args:
+                try:
+                    r = int(args["r"]) if args["r"] != "" else 0
+                    g = int(args["g"]) if args["g"] != "" else 0
+                    b = int(args["b"]) if args["b"] != "" else 0
+                    cmd = {"led": {"r": r, "g": g, "b": b}}
+                    if "fl" in args:
+                        cmd["flicker"] = int(args["fl"])
+                    elif "fa" in args:
+                        cmd["fade"] = int(args["fa"])
+                        # optional from values
+                        fr = (
+                            int(args.get("fr", ""))
+                            if args.get("fr", "") != ""
+                            else None
+                        )
+                        fg = (
+                            int(args.get("fg", ""))
+                            if args.get("fg", "") != ""
+                            else None
+                        )
+                        fb = (
+                            int(args.get("fb", ""))
+                            if args.get("fb", "") != ""
+                            else None
+                        )
+                        if fr is not None or fg is not None or fb is not None:
+                            from_obj = {}
+                            if fr is not None:
+                                from_obj["r"] = fr
+                            if fg is not None:
+                                from_obj["g"] = fg
+                            if fb is not None:
+                                from_obj["b"] = fb
+                            cmd["from"] = from_obj
+                    command_queue.put(cmd)
+                except Exception:
+                    pass
+
+            # Send simple ACK back
+            try:
+                sock.sendto(f"ACK:{packet_id}".encode("utf-8"), addr)
+            except Exception:
+                pass
+
+        except Exception as e:
+            print("UDP receive error:", e)
+            continue
 
 
-def run_ws_server():
-    """
-    Spins up its own event loop on a background thread,
-    starts the WebSocket server, and runs forever.
-    """
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
+def run_http_server(host="0.0.0.0", port=81):
+    """Simple HTTP server exposing POST /resetIndexCounter to reset packet index."""
 
-    async def server_main():
-        async with websockets.serve(
-            handle_ws,
-            WS_HOST,
-            WS_PORT,
-            max_size=2**20,
-            ping_interval=None,
-            ping_timeout=None,
-        ):
-            host_disp = WS_HOST if WS_HOST != "0.0.0.0" else "localhost"
-            print(f"WS server on ws://{host_disp}:{WS_PORT}{WS_PATH}")
-            await asyncio.Future()  # run forever
+    class Handler(BaseHTTPRequestHandler):
+        def do_POST(self):
+            if self.path != "/resetIndexCounter":
+                self.send_response(404)
+                self.end_headers()
+                return
+            # reset the global packet counter
+            global udp_last_packet_id
+            udp_last_packet_id = 0
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(b"Packet index counter reset.")
+
+        def log_message(self, format, *args):
+            # suppress default logging
+            return
 
     try:
-        loop.run_until_complete(server_main())
+        server = HTTPServer((host, port), Handler)
+        print(f"HTTP server listening on http://{host}:{port}")
+        server.serve_forever()
     except Exception as e:
-        print("WebSocket server failed:", e)
-        raise
+        print("HTTP server failed:", e)
 
 
 # --- Utility & Main Loop ---
@@ -331,8 +426,10 @@ def main():
     mouse_down = False
     last_mouse = (0, 0)
 
-    # Start WebSocket server on background thread
-    threading.Thread(target=run_ws_server, daemon=True).start()
+    # Start UDP server on background thread
+    threading.Thread(target=run_udp_server, daemon=True).start()
+    # Start HTTP server to expose reset endpoint
+    threading.Thread(target=run_http_server, daemon=True).start()
 
     clock = pygame.time.Clock()
 
@@ -547,7 +644,4 @@ def main():
 
 
 if __name__ == "__main__":
-    if not hasattr(asyncio, "get_event_loop"):
-        print("Requires Python 3.7+")
-        sys.exit(1)
     main()
