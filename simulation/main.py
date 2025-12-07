@@ -240,7 +240,6 @@ def run_udp_server(host="0.0.0.0", port=1234):
             # Debug
             print("UDP args:", args)
 
-            # Map args into command_queue items similar to WebSocket handler
             if "bS" in args:
                 try:
                     ang = float(args["bS"])
@@ -256,27 +255,31 @@ def run_udp_server(host="0.0.0.0", port=1234):
 
             if "r" in args and "g" in args and "b" in args:
                 try:
-                    r = int(args["r"]) if args["r"] != "" else 0
-                    g = int(args["g"]) if args["g"] != "" else 0
-                    b = int(args["b"]) if args["b"] != "" else 0
-                    cmd = {"led": {"r": r, "g": g, "b": b}}
+                    r = float(args["r"]) if args["r"] != "" else 0.0
+                    g = float(args["g"]) if args["g"] != "" else 0.0
+                    b = float(args["b"]) if args["b"] != "" else 0.0
+                    # Clamp to 0-255 range in case values exceed
+                    r = max(0, min(255, r))
+                    g = max(0, min(255, g))
+                    b = max(0, min(255, b))
+                    cmd = {"led": {"r": int(r), "g": int(g), "b": int(b)}}
                     if "fl" in args:
                         cmd["flicker"] = int(args["fl"])
                     elif "fa" in args:
                         cmd["fade"] = int(args["fa"])
                         # optional from values
                         fr = (
-                            int(args.get("fr", ""))
+                            int(float(args.get("fr", "")))
                             if args.get("fr", "") != ""
                             else None
                         )
                         fg = (
-                            int(args.get("fg", ""))
+                            int(float(args.get("fg", "")))
                             if args.get("fg", "") != ""
                             else None
                         )
                         fb = (
-                            int(args.get("fb", ""))
+                            int(float(args.get("fb", "")))
                             if args.get("fb", "") != ""
                             else None
                         )
@@ -290,7 +293,8 @@ def run_udp_server(host="0.0.0.0", port=1234):
                                 from_obj["b"] = fb
                             cmd["from"] = from_obj
                     command_queue.put(cmd)
-                except Exception:
+                except Exception as e:
+                    print(f"LED parsing error: {e}")
                     pass
 
             # Send simple ACK back
@@ -549,11 +553,13 @@ def main():
         led_color = SIMULATOR_STATE["led_color"]
 
         if now < SIMULATOR_STATE["flicker_end_time"]:
+            # Flicker is active
             if (now // 50) % 2 == 0:
                 led_color = SIMULATOR_STATE["flicker_base_color"]
             else:
                 led_color = (0, 0, 0)
         elif SIMULATOR_STATE.get("fade_active", False):
+            # Fade is active
             t = now - SIMULATOR_STATE["fade_start_time"]
             duration = SIMULATOR_STATE["fade_duration"]
             if t >= duration:
@@ -564,6 +570,8 @@ def main():
                 sc = SIMULATOR_STATE["fade_start_color"]
                 ec = SIMULATOR_STATE["fade_end_color"]
                 led_color = tuple(sc[i] + (ec[i] - sc[i]) * f for i in range(3))
+        # else: led_color stays as SIMULATOR_STATE["led_color"] (plain RGB mode)
+        
         SIMULATOR_STATE["led_color"] = led_color
 
         # Use led_color for all OpenGL lighting
