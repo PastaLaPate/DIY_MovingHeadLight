@@ -35,7 +35,9 @@ ESP32 Or any compatible board (might need to change pin numbers in the code & Pl
 - Breadboard and jumper wires Or PCB
 
 > [!NOTE]
-> A custom PCB might be created later in future.
+> Here is a pcb made in Easy eda which support up to a 1W RGB Led
+> Project : https://oshwlab.com/pastalapate/movinghead_led
+> Editor : https://pro.easyeda.com/editor#id=c217a71503914a7fb4df2c4265607413
 
 ## Usage
 
