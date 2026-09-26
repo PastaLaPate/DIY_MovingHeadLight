@@ -56,7 +56,7 @@ You can use ![Light Show Controller](https://github.com/PastaLaPate/Lightshow) t
 You can now open a WebSocket connection to `ws://<your-esp32-ip>:<port>/ws` to control the servos and LEDs. Port is defined in `src/SETTINGS.h` (default is 81). 3. Use the WebSocket client to send JSON commands to control the servos and LEDs.
 JSON Body for controlling servo:
 
-```json
+```jsonc
 {
   "servo": "top", // "top" or "base"
   "angle": 90 // angle in degrees
@@ -65,7 +65,7 @@ JSON Body for controlling servo:
 
 JSON Body for controlling LED color:
 
-```json
+```jsonc
 {
   "led": {
     "r": 255, // red value (0-255)
