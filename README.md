@@ -59,7 +59,7 @@ JSON Body for controlling servo:
 ```jsonc
 {
   "servo": "top", // "top" or "base"
-  "angle": 90 // angle in degrees
+  "angle": 90, // angle in degrees
 }
 ```
 
@@ -70,7 +70,22 @@ JSON Body for controlling LED color:
   "led": {
     "r": 255, // red value (0-255)
     "g": 0, // green value (0-255)
-    "b": 0 // blue value (0-255)
-  }
+    "b": 0, // blue value (0-255)
+  },
 }
 ```
+
+## AI Policy
+
+In this project like every one I create, code is handwritten and hand-reviewed. AI must strictly be used as a tool, not as a replacment for your brain. AI Use cases:
+
+- Explaining the code base
+- Help for architectural decisions: which pattern to use
+- Find TODOs and give snippet of example code.
+- Help for Libs' usage.
+
+What it musn't be used for:
+
+- Full AI Commit with no review
+- Full architectural decisions without thinking about alternatives
+- Code you don't know how it works.
