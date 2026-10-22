@@ -1,0 +1,3 @@
+[environment]
+python = "./simulator/.venv"
+root = ["./simulator/src"]

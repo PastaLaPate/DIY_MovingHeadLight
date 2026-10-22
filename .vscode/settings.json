@@ -5,5 +5,10 @@
     "--background-index",
     "--header-insertion=never"
   ],
+  "python.languageServer": "None",
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "always",
+    "source.organizeImports": "always"
+  },
   "C_Cpp.intelliSenseEngine": "disabled"
 }

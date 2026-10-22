@@ -8,3 +8,4 @@ include/SECRETS.h
 compile_commands.json
 
 *.FCBak
+exports
