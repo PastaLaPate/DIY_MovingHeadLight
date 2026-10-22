@@ -5,7 +5,7 @@ requires-python = ">=3.14"
 [[package]]
 name = "compsoft"
 version = "0.1.0"
-source = { git = "https://github.com/PastaLaPate/CompSoft.git#63623d60af82c2eea85008370aaae2cdba0b9881" }
+source = { git = "https://github.com/PastaLaPate/CompSoft.git#1e98eb3129c812f90424ef5feafcb7b103efdadb" }
 dependencies = [
     { name = "glfw" },
     { name = "numpy" },

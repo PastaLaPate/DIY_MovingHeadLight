@@ -1,3 +1,4 @@
+from compsoft.scene.components.light import SpotLight
 from compsoft.scene.gizmos.axes import Axis
 from compsoft.scene.scene import Scene  # adjust, only used for type hints
 from numpy.random import uniform
@@ -56,3 +57,24 @@ class MovingHeadLine:
         for head, (base_seed, head_seed) in zip(self.heads, self._seeds):
             head.set_base_rot(smooth_noise(ts, base_seed) * self.amplitude)
             head.set_head_rot(smooth_noise(ts, head_seed) * self.amplitude)
+        self.set_color_all(
+            vec3(
+                smooth_noise(ts, 1) * 0.5 + 1,
+                smooth_noise(ts, 2) * 0.5 + 1,
+                smooth_noise(ts, 3) * 0.5 + 1,
+            )
+        )
+
+    def set_base_rot_all(self, rot: float) -> None:
+        for head in self.heads:
+            head.set_base_rot(rot)
+
+    def set_head_rot_all(self, rot: float) -> None:
+        for head in self.heads:
+            head.set_head_rot(rot)
+
+    def set_color_all(self, color: vec3) -> None:
+        for head in self.heads:
+            light = head.head.get_component_by_type(SpotLight)
+            if light:
+                light.color = color
