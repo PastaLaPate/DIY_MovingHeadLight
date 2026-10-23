@@ -40,7 +40,7 @@ def main():
     scene.load()
     # scene.debug.add_flag(DebugFlags.DEBUG_RENDER_SHADOW_MAP)
     scene.debug.add_flag(DebugFlags.DEBUG_FRAME_TIME)
-    # scene.debug.add_flag(DebugFlags.DEBUG_FRAME_TIME_DETAILLED)
+    scene.debug.add_flag(DebugFlags.DEBUG_FRAME_TIME_DETAILLED)
     scene.camera.pos = vec3(0, 7, 0)
     scene.camera.look_at(vec3(5, 10, 5))
 
@@ -53,7 +53,7 @@ def main():
     plane.load()
     plane.scale = vec3(100, 1, 100)
 
-    moving_head_line = MovingHeadLine(scene, 5, same_seed=True)
+    moving_head_line = MovingHeadLine(scene, 1, same_seed=True)
     moving_head_line.set_base_rot_all(90)
     moving_head_line.set_head_rot_all(90)
 

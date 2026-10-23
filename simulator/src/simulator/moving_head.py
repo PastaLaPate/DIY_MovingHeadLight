@@ -48,7 +48,7 @@ class MovingHead(Actor):
         mh_head_cyl.scale = vec3(0.35, 0.45, 0.35)
         mh_head_cyl.load()
         self.head.add_component(
-            SpotLight(direction=vec3(0, 1, 0), position=vec3(0, 0.42, 0))
+            SpotLight(direction=vec3(0, 1, 0), position=vec3(0, 0.42, 0), angle=10)
         )
 
     def set_base_rot(self, rot: float):
