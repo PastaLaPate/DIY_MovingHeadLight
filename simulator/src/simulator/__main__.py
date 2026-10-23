@@ -9,6 +9,7 @@ from compsoft.resources.textures import TextureRegistry
 from compsoft.scene.actor import Actor
 from compsoft.scene.components.cube import SimpleCubeComponent
 from compsoft.scene.components.light import DirectionalLight
+from compsoft.scene.gizmos.axes import Axis
 from glm import vec3
 from OpenGL import GL
 from OpenGL.GL import glGetString
@@ -53,7 +54,7 @@ def main():
     plane.load()
     plane.scale = vec3(100, 1, 100)
 
-    moving_head_line = MovingHeadLine(scene, 3, same_seed=True)
+    moving_head_line = MovingHeadLine(scene, 3, same_seed=True, axis=Axis.Z)
     moving_head_line.set_base_rot_all(90)
     moving_head_line.set_head_rot_all(90)
 
