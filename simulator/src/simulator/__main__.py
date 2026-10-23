@@ -1,5 +1,6 @@
 # NVIDIA PRIME Offload
 import os
+import queue
 import time
 
 from compsoft.core.debug import DebugFlags
@@ -70,7 +71,7 @@ def main():
         while True:
             try:
                 fixture.apply(server.queue.get_nowait())
-            except Exception:  # queue.Empty
+            except queue.Empty:
                 break
 
         if server.received_any:
