@@ -75,6 +75,10 @@ JSON Body for controlling LED color:
 }
 ```
 
+## Thanks:
+
+To entuland (361799048111325184) on FreeCAD's discord server for it's help for modeling the complex curves.
+
 ## AI Policy
 
 In this project like every one I create, code is handwritten and hand-reviewed. AI must strictly be used as a tool, not as a replacment for your brain. AI Use cases:
