@@ -53,7 +53,7 @@ def main():
     plane.load()
     plane.scale = vec3(100, 1, 100)
 
-    moving_head_line = MovingHeadLine(scene, 1, same_seed=True)
+    moving_head_line = MovingHeadLine(scene, 3, same_seed=True)
     moving_head_line.set_base_rot_all(90)
     moving_head_line.set_head_rot_all(90)
 
