@@ -47,7 +47,7 @@ void setup() {
   Serial.println("Setuping AsyncWebServer & WebSocket...");
   setupServer();
   // Start WebSocket server
-  Serial.printf("WebSocket server started on port %d \r\n", PORT);
+  Serial.printf("WebSocket server started on port %d \r\n", HTTP_PORT);
   Serial.println("Operational!");
   flicker(0, 255, 0, 1000);
 }

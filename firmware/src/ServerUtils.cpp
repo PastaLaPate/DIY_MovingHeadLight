@@ -1,16 +1,19 @@
+#include "ArduinoJson.hpp"
+#include "ArduinoJson/Object/JsonObject.hpp"
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 #include <Update.h>
 
 #include <LedUtils.h>
 #include <SECRETS.h>
+#include <SETTINGS.h>
 #include <ServerUtils.h>
 #include <ServoUtils.h>
 #include <UDPManager.h>
 
 extern const char ota_html[] asm("_binary_src_ota_html_start");
 
-AsyncWebServer server(PORT);
+AsyncWebServer server(HTTP_PORT);
 AsyncWebSocket ws("/ws");
 
 static volatile bool otaStarted = false;
@@ -79,6 +82,25 @@ void setupServer() {
     req->send(200, "text/html", ota_html);
   });
 
+  server.on("/config", HTTP_GET, [](AsyncWebServerRequest *req) {
+    JsonDocument doc;
+
+    JsonObject ports = doc["ports"].to<JsonObject>();
+    ports["http"] = HTTP_PORT;
+    ports["udp"] = UDP_PORT;
+
+    JsonObject pins = doc["pins"].to<JsonObject>();
+    pins["top_servo"] = TOP_SERVO_PIN;
+    pins["base_servo"] = BASE_SERVO_PIN;
+    pins["led_r"] = RED_PIN;
+    pins["led_g"] = GREEN_PIN;
+    pins["led_b"] = BLUE_PIN;
+
+    String serialized;
+    serializeJson(doc, serialized);
+    req->send(200, "application/json", serialized.c_str());
+  });
+
   server.on(
       "/update", HTTP_POST,
       [](AsyncWebServerRequest *req) {
@@ -94,6 +116,12 @@ void setupServer() {
         otaDone = true;
       },
       nullptr, handleUpdateBody);
+
+  server.serveStatic("/assets", LittleFS, "/assets")
+      .setCacheControl("public, max-age=31536000, immutable");
+  server.serveStatic("/", LittleFS, "/")
+      .setDefaultFile("index.html")
+      .setCacheControl("no-cache");
 
   server.addHandler(&ws);
   setupUDPManager(&server);

@@ -1,4 +1,5 @@
-#define PORT 81
+#define HTTP_PORT 80
+#define UDP_PORT 6455
 
 // SERVOS
 #define TOP_SERVO_PIN 12

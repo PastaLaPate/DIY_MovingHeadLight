@@ -5,4 +5,10 @@
     { "name": "simulator", "path": "simulator" },
     { "name": "root", "path": "." },
   ],
+  "settings": {
+    "clangd.arguments": [
+      "--query-driver=**/.platformio/packages/toolchain-*/bin/*",
+    ],
+    "C_Cpp.intelliSenseEngine": "disabled",
+  },
 }

@@ -3,6 +3,7 @@
 #include <ServoUtils.h>
 #include <UDPManager.h>
 
+#include "HardwareSerial.h"
 #include "map"
 
 AsyncUDP udp;
@@ -38,10 +39,11 @@ String strs[20];
 int lastPackedIndex = 0;
 
 void setupUDPManager(AsyncWebServer *server) {
-  if (udp.listen(1234)) {
+  if (udp.listen(UDP_PORT)) {
     Serial.print("UDP Listening on IP: ");
     Serial.print(WiFi.localIP());
-    Serial.println(":1234");
+    Serial.print(":");
+    Serial.println(UDP_PORT);
     server->on(
         "/resetIndexCounter", HTTP_POST, [](AsyncWebServerRequest *request) {
           lastPackedIndex = 0;
