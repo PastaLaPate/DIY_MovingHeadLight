@@ -1,52 +1,131 @@
+#include <ESPAsyncWebServer.h>
+#include <LittleFS.h>
+#include <Update.h>
+
 #include <LedUtils.h>
+#include <SECRETS.h>
 #include <ServerUtils.h>
 #include <ServoUtils.h>
 #include <UDPManager.h>
 
+extern const char ota_html[] asm("_binary_src_ota_html_start");
+
 AsyncWebServer server(PORT);
 AsyncWebSocket ws("/ws");
 
-void onOTAStart() {
-  Serial.println("[OTA] Starting OTA update...");
-  flicker(0, 0, 255, 500);
-}
+static volatile bool otaStarted = false;
+static volatile bool otaDone = false;
+static volatile bool otaOk = false;
+static volatile size_t otaCurrent = 0, otaTotal = 0;
+static bool otaAuthorized = false;
+static bool otaFailed = false;
+static unsigned long otaLastLog = 0;
 
-unsigned long ota_progress_millis = 0;
+static void handleUpdateBody(AsyncWebServerRequest *req, uint8_t *data,
+                             size_t len, size_t index, size_t total) {
+  if (index == 0) {
+    otaAuthorized = req->authenticate(OTA_USER, OTA_PASS);
+    otaFailed = false;
+    if (!otaAuthorized || Update.isRunning()) {
+      otaFailed = true;
+      return;
+    }
 
-void onOTAProgress(size_t current, size_t final) {
-  // Log every 1 second
-  if (millis() - ota_progress_millis > 1000) {
-    ota_progress_millis = millis();
-    flicker(0, 0, 255, 100);
-    Serial.printf("[OTA] Progress Current: %u bytes, Final: %u bytes\n",
-                  current, final);
+    bool isFs = req->hasParam("type") && req->getParam("type")->value() == "fs";
+    if (isFs)
+      LittleFS.end(); // unmount before overwriting the partition
+
+    if (!Update.begin(total, isFs ? U_SPIFFS : U_FLASH)) {
+      Update.printError(Serial);
+      otaFailed = true;
+      return;
+    }
+    // Abort cleanly if the client drops mid-upload
+    req->onDisconnect([]() {
+      if (Update.isRunning()) {
+        Update.abort();
+        Serial.println("[OTA] Client disconnected, aborted");
+      }
+    });
+    otaTotal = total;
+    otaStarted = true;
   }
-}
 
-void onOTAEnd(bool success) {
-  flicker(255, 0, 0, 1000);
-  if (success) {
-    Serial.println("[OTA] OTA update finished successfully!.. Rebooting");
-  } else {
-    Serial.println("There was an error during OTA update!");
+  if (!otaAuthorized || otaFailed)
+    return;
+
+  if (Update.write(data, len) != len) {
+    Update.printError(Serial);
+    otaFailed = true;
+    return;
+  }
+  otaCurrent = index + len;
+
+  if (index + len == total) {
+    if (!Update.end(true)) {
+      Update.printError(Serial);
+      otaFailed = true;
+    }
   }
 }
 
 void setupServer() {
-  server.on("/", HTTP_GET, [](AsyncWebServerRequest *request) {
-    request->send(200, "text/plain",
-                  "Hi! This is ElegantOTA. Go to /update to update.");
+  if (!LittleFS.begin(true))
+    Serial.println("LittleFS mount failed");
+
+  server.on("/update", HTTP_GET, [](AsyncWebServerRequest *req) {
+    if (!req->authenticate(OTA_USER, OTA_PASS))
+      return req->requestAuthentication();
+    req->send(200, "text/html", ota_html);
   });
+
+  server.on(
+      "/update", HTTP_POST,
+      [](AsyncWebServerRequest *req) {
+        if (!otaAuthorized)
+          return req->requestAuthentication();
+        bool ok = !otaFailed && !Update.hasError();
+        auto *res = req->beginResponse(
+            ok ? 200 : 500, "text/plain",
+            ok ? "OK, rebooting" : String("FAIL: ") + Update.errorString());
+        res->addHeader("Connection", "close");
+        req->send(res);
+        otaOk = ok;
+        otaDone = true;
+      },
+      nullptr, handleUpdateBody);
+
   server.addHandler(&ws);
   setupUDPManager(&server);
-  ElegantOTA.begin(&server);
-  ElegantOTA.onStart(onOTAStart);
-  ElegantOTA.onProgress(onOTAProgress);
-  ElegantOTA.onEnd(onOTAEnd);
+
+  server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
+
   server.begin();
 }
 
 void loopServer() {
-  ElegantOTA.loop();
   ws.cleanupClients();
+
+  // OTA events handled here, so the blocking flicker() never runs inside the
+  // async task
+  if (otaStarted) {
+    otaStarted = false;
+    Serial.println("[OTA] Starting OTA update...");
+    flicker(0, 0, 255, 500);
+  }
+  if (Update.isRunning() && millis() - otaLastLog > 1000) {
+    otaLastLog = millis();
+    Serial.printf("[OTA] %u / %u bytes\n", (unsigned)otaCurrent,
+                  (unsigned)otaTotal);
+  }
+  if (otaDone) {
+    otaDone = false;
+    if (otaOk) {
+      Serial.println("[OTA] Finished successfully, rebooting");
+      flicker(255, 0, 0, 1000);
+      ESP.restart();
+    } else {
+      Serial.println("[OTA] Error during update");
+    }
+  }
 }

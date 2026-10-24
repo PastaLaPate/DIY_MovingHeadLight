@@ -1,0 +1,47 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Moving Head OTA</title>
+<style>
+  body {
+    font-family: sans-serif;
+    max-width: 480px;
+    margin: 2em auto;
+    padding: 0 1em;
+  }
+  progress {
+    width: 100%;
+    height: 1.5em;
+  }
+</style>
+<h3>OTA update</h3>
+<select id="t">
+  <option value="fw">Firmware</option>
+  <option value="fs">Filesystem</option>
+</select>
+<input type="file" id="f" accept=".bin" />
+<button id="b">Upload</button>
+<progress id="p" value="0" max="100"></progress>
+<pre id="s"></pre>
+<script>
+  b.onclick = () => {
+    const file = f.files[0];
+    if (!file) return;
+    b.disabled = true;
+    const x = new XMLHttpRequest();
+    x.open("POST", "/update?type=" + t.value);
+    x.setRequestHeader("Content-Type", "application/octet-stream");
+    x.upload.onprogress = (e) => {
+      if (e.lengthComputable) p.value = (100 * e.loaded) / e.total;
+    };
+    x.onload = () => {
+      s.textContent = x.status + " " + x.responseText;
+      b.disabled = false;
+    };
+    x.onerror = () => {
+      s.textContent = "Connection error";
+      b.disabled = false;
+    };
+    x.send(file);
+  };
+</script>
