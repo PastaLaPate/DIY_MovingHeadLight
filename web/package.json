@@ -1,0 +1,23 @@
+{
+  "name": "movinghead-ui",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tailwindcss -i src/input.css -o src/main.css --watch",
+    "build": "node build.mjs",
+    "build:raw": "node build.mjs --no-gzip"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@12.15.0",
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.3.3",
+    "prettier": "^3.9.10",
+    "prettier-plugin-tailwindcss": "^0.8.1",
+    "tailwindcss": "^4.3.3"
+  }
+}

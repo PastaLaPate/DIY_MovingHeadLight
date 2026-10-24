@@ -5,6 +5,10 @@
 .vscode/ipch
 include/SECRETS.h
 
+data/
+web/node_modules/
+web/src/main.css
+
 compile_commands.json
 
 *.FCBak

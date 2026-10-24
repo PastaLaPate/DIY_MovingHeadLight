@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="color-scheme" content="dark light" />
+  <title>Moving Head</title>
+  <link rel="stylesheet" href="/main.css" />
+  <script defer src="/app.js"></script>
+</head>
+<body class="min-h-dvh bg-zinc-950 text-zinc-100 antialiased">
+  <main class="mx-auto max-w-md space-y-6 p-4">
+    <h1 class="text-xl font-semibold">Moving Head</h1>
+    <label class="block">
+      <span class="text-sm text-zinc-400">Pan</span>
+      <input id="pan" type="range" min="0" max="180" value="90"
+             class="mt-1 w-full accent-brand-500" />
+    </label>
+    <button class="btn" id="blackout">Blackout</button>
+  </main>
+</body>
+</html>

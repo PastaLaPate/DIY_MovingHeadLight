@@ -1,0 +1,8 @@
+{
+  "folders": [
+    { "name": "firmware", "path": "firmware" },
+    { "name": "web", "path": "web" },
+    { "name": "simulator", "path": "simulator" },
+    { "name": "root", "path": "." },
+  ],
+}
