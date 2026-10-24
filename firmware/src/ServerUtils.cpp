@@ -1,10 +1,12 @@
 #include "ArduinoJson.hpp"
 #include "ArduinoJson/Object/JsonObject.hpp"
+#include "WString.h"
 #include <ESPAsyncWebServer.h>
 #include <LittleFS.h>
 #include <Update.h>
 
 #include <LedUtils.h>
+#include <PacketParser.h>
 #include <SECRETS.h>
 #include <SETTINGS.h>
 #include <ServerUtils.h>
@@ -72,6 +74,43 @@ static void handleUpdateBody(AsyncWebServerRequest *req, uint8_t *data,
   }
 }
 
+String handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
+  String data_str = String(data, len);
+  int packetID = parse_packet(data_str);
+  if (packetID != -1) {
+    return "applied.";
+  } else {
+    return "format error.";
+  }
+}
+
+void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
+                      AwsEventType type, void *arg, uint8_t *data, size_t len) {
+  JsonDocument resp;
+  String msg;
+
+  switch (type) {
+  case WS_EVT_CONNECT:
+    Serial.printf("WebSocket client #%u connected from %s\n", client->id(),
+                  client->remoteIP().toString().c_str());
+    resp["message"] = "Connected successfully";
+    resp["clientId"] = String(client->id());
+    serializeJson(resp, msg);
+    client->text(msg);
+    break;
+  case WS_EVT_DISCONNECT:
+    Serial.printf("WebSocket client #%u disconnected\n", client->id());
+    break;
+  case WS_EVT_DATA:
+    client->text(handleWebSocketMessage(arg, data, len));
+    break;
+  case WS_EVT_PING:
+  case WS_EVT_PONG:
+  case WS_EVT_ERROR:
+    break;
+  }
+}
+
 void setupServer() {
   if (!LittleFS.begin(true))
     Serial.println("LittleFS mount failed");
@@ -123,6 +162,7 @@ void setupServer() {
       .setDefaultFile("index.html")
       .setCacheControl("no-cache");
 
+  ws.onEvent(onWebSocketEvent);
   server.addHandler(&ws);
   setupUDPManager(&server);
 

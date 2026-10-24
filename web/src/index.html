@@ -1,23 +1,44 @@
 <!doctype html>
 <html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="color-scheme" content="dark light" />
-  <title>Moving Head</title>
-</head>
-<body class="min-h-dvh bg-zinc-950 text-zinc-100 antialiased">
-  <main class="mx-auto max-w-md space-y-6 p-4">
-    <h1 class="flex items-center justify-between text-xl font-semibold">
-      Moving Head
-      <span id="status" class="text-sm text-red-400">offline</span>
-    </h1>
-    <label class="block">
-      <span class="text-sm text-zinc-400">Pan <output id="pan-val">90</output></span>
-      <input id="pan" type="range" min="0" max="180" value="90"
-             class="mt-1 w-full accent-indigo-500" />
-    </label>
-  </main>
-  <script type="module" src="/main.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Moving Head</title>
+  </head>
+  <body class="min-h-dvh bg-zinc-950 text-zinc-100 antialiased">
+    <main class="mx-auto max-w-md space-y-6 p-4">
+      <h1 class="flex items-center justify-between text-xl font-semibold">
+        Moving Head
+        <span id="status" class="text-sm text-red-400">offline</span>
+      </h1>
+      <div id="config-panel"></div>
+      <label class="block">
+        <span class="text-sm text-zinc-400"
+          >Top Servo <output id="top-val">90</output></span
+        >
+        <input
+          id="top_servo"
+          type="range"
+          min="0"
+          max="180"
+          value="90"
+          class="mt-1 w-full accent-blue-600"
+        /> </label
+      ><label class="block">
+        <span class="text-sm text-zinc-400"
+          >Base Servo <output id="base-val">90</output></span
+        >
+        <input
+          id="base_servo"
+          type="range"
+          min="0"
+          max="180"
+          value="90"
+          class="mt-1 w-full accent-blue-600"
+        />
+      </label>
+    </main>
+    <script type="module" src="/main.js"></script>
+  </body>
 </html>

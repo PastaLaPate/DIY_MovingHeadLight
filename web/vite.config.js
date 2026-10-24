@@ -1,7 +1,6 @@
 import { defineConfig } from "vite";
 import tailwindcss from "@tailwindcss/vite";
-
-const target = `ws://${process.env.ESP ?? "192.168.1.37"}`;
+const host = process.env.ESP ?? "192.168.1.37";
 
 export default defineConfig({
   root: "src",                          // relative to this file
@@ -13,6 +12,9 @@ export default defineConfig({
     modulePreload: false,               // single bundle, skip the preload polyfill
   },
   server: {
-    proxy: { "/ws": { target, ws: true } },
+  proxy: {
+    "/ws": { target: `ws://${host}`, ws: true },
+    "/config": `http://${host}`,
+  },
   },
 });
