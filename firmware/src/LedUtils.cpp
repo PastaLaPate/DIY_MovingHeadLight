@@ -1,8 +1,8 @@
 #include "LedUtils.h"
 #include <Arduino.h>
+#include <algorithm>
 
-void setupLEDPWM(int redPin, int greenPin, int bluePin)
-{
+void setupLEDPWM(int redPin, int greenPin, int bluePin) {
   // Initialize LED PWM channels
   ledcSetup(RED_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
   ledcSetup(GREEN_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
@@ -12,28 +12,28 @@ void setupLEDPWM(int redPin, int greenPin, int bluePin)
   ledcAttachPin(redPin, RED_CHANNEL);
   ledcAttachPin(greenPin, GREEN_CHANNEL);
   ledcAttachPin(bluePin, BLUE_CHANNEL);
+
+  setColor(255, 255, 255);
 }
 
-void setColor(int redValue, int greenValue, int blueValue)
-{
-  ledcWrite(RED_CHANNEL, redValue);
-  ledcWrite(GREEN_CHANNEL, greenValue);
-  ledcWrite(BLUE_CHANNEL, blueValue);
+void setColor(int redValue, int greenValue, int blueValue) {
+  ledcWrite(RED_CHANNEL, max(redValue, 20));
+  ledcWrite(GREEN_CHANNEL, max(greenValue, 20));
+  ledcWrite(BLUE_CHANNEL, max(blueValue, 20));
 }
 
-void flicker(int redValue, int greenValue, int blueValue, int duration)
-{
-  for (int i = 0; i < duration; i += 100)
-  {
+void flicker(int redValue, int greenValue, int blueValue, int duration) {
+  for (int i = 0; i < duration; i += 100) {
     setColor(redValue, greenValue, blueValue);
     delay(25);
     setColor(0, 0, 0); // Turn off
     delay(25);
   }
+  setColor(0, 0, 0);
 }
 
-void fadeToColor(int rFrom, int gFrom, int bFrom, int rTarget, int gTarget, int bTarget, int durationMs, FadeType fadeType)
-{
+void fadeToColor(int rFrom, int gFrom, int bFrom, int rTarget, int gTarget,
+                 int bTarget, int durationMs, FadeType fadeType) {
   int steps = 15; // Number of steps in the fade
   int delayMs = durationMs / steps;
 
@@ -41,15 +41,22 @@ void fadeToColor(int rFrom, int gFrom, int bFrom, int rTarget, int gTarget, int 
   float gStep = (gTarget - gFrom) / float(steps);
   float bStep = (bTarget - bFrom) / float(steps);
 
-  for (int i = 1; i <= steps; ++i)
-  {
+  for (int i = 1; i <= steps; ++i) {
     float progress = float(i) / steps;
     float ease;
     switch (fadeType) {
-      case LINEAR:        ease = progress; break;
-      case EASE_IN_QUAD:  ease = progress * progress; break;
-      case EASE_IN_CUBIC: ease = progress * progress * progress; break;
-      case EASE_IN_QUART: ease = progress * progress * progress * progress; break;
+    case LINEAR:
+      ease = progress;
+      break;
+    case EASE_IN_QUAD:
+      ease = progress * progress;
+      break;
+    case EASE_IN_CUBIC:
+      ease = progress * progress * progress;
+      break;
+    case EASE_IN_QUART:
+      ease = progress * progress * progress * progress;
+      break;
     }
     int r = rFrom + (rTarget - rFrom) * ease;
     int g = gFrom + (gTarget - gFrom) * ease;
