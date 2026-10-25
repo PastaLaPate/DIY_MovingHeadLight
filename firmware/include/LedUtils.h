@@ -38,3 +38,5 @@ void setColor(int redValue, int greenValue, int blueValue);
 void flicker(int redValue, int greenValue, int blueValue, int duration);
 void fadeToColor(int rFrom, int gFrom, int bFrom, int rTarget, int gTarget,
                  int bTarget, int durationMs, FadeType fadeType = LINEAR);
+void cancelEffect();
+void updateLED();

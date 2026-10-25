@@ -96,6 +96,7 @@ int parse_packet(String data) {
           fg, fb, r, g, b, fadeDuration);
       fadeToColor(fr, fg, fb, r, g, b, fadeDuration, EASE_IN_QUART);
     } else {
+      cancelEffect();
       Serial.printf("Setting LED to RGB(%d, %d, %d)\n", r, g, b);
       setColor(r, g, b);
     }

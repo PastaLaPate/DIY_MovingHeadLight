@@ -53,4 +53,7 @@ void setup() {
 }
 
 // ***** Main Loop *****
-void loop() { loopServer(); }
+void loop() {
+  updateLED();
+  loopServer();
+}

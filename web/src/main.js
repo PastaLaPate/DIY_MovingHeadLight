@@ -56,3 +56,28 @@ $("#base_servo").on("input", function () {
   $("#base-val").text(angle);
   send(`bS=${angle}`);
 });
+
+let currentR = 90;
+let currentG = 90;
+let currentB = 90;
+
+$("#r_led").on("input", function () {
+  const brightness = Number(this.value);
+  currentR = brightness;
+  $("#r-val").text(brightness);
+  send(`r=${currentR};g=${currentG};b=${currentB}`);
+});
+
+$("#g_led").on("input", function () {
+  const brightness = Number(this.value);
+  currentG = brightness;
+  $("#g-val").text(brightness);
+  send(`r=${currentR};g=${currentG};b=${currentB}`);
+});
+
+$("#b_led").on("input", function () {
+  const brightness = Number(this.value);
+  $("#b-val").text(brightness);
+  currentB = brightness;
+  send(`r=${currentR};g=${currentG};b=${currentB}`);
+});

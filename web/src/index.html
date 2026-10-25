@@ -10,6 +10,7 @@
     <main class="mx-auto max-w-md space-y-6 p-4">
       <h1 class="flex items-center justify-between text-xl font-semibold">
         Moving Head
+        <a href="/update">Update FW</a>
         <span id="status" class="text-sm text-red-400">offline</span>
       </h1>
       <div id="config-panel"></div>
@@ -34,6 +35,42 @@
           type="range"
           min="0"
           max="180"
+          value="90"
+          class="mt-1 w-full accent-blue-600"
+        /> </label
+      ><label class="block">
+        <span class="text-sm text-zinc-400"
+          >R <output id="r-val">90</output></span
+        >
+        <input
+          id="r_led"
+          type="range"
+          min="0"
+          max="255"
+          value="90"
+          class="mt-1 w-full accent-red-600"
+        /> </label
+      ><label class="block">
+        <span class="text-sm text-zinc-400"
+          >G <output id="g-val">90</output></span
+        >
+        <input
+          id="g_led"
+          type="range"
+          min="0"
+          max="255"
+          value="90"
+          class="mt-1 w-full accent-green-600"
+        /> </label
+      ><label class="block">
+        <span class="text-sm text-zinc-400"
+          >B<output id="b-val">90</output></span
+        >
+        <input
+          id="b_led"
+          type="range"
+          min="0"
+          max="255"
           value="90"
           class="mt-1 w-full accent-blue-600"
         />
