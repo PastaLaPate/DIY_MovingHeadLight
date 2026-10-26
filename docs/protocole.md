@@ -1,6 +1,6 @@
-## UDP Packets
+## Packets
 
-UDP Packet:
+Packet:
 Packet_ID;args (in format key=value separated by ;)
 If the device receives an udp packet with an ID less than any previous packet receives, it will ignore it.
 
@@ -24,5 +24,3 @@ Fade:
 - fr : From Red Value (0-255)
 - fg : From Green Value (0-255)
 - fb : From Blue Value (0-255)
-
-will give format error msg in ws if the format is wrong.
