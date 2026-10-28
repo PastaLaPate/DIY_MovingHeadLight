@@ -11,6 +11,5 @@ data/
 
 compile_commands.json
 
-*.FCBak
 exports
 __pycache__
