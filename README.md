@@ -1,6 +1,6 @@
 # MovingHead DIY
 
-[![License](https://img.shields.io/badge/License-CC_BY--NC_4.0-green?link=https%3A%2F%2Fcreativecommons.org%2Flicenses%2Fby-nc-sa%2F4.0%2F%20)](https://creativecommons.org/licenses/by-nc-sa/4.0/)
+![GitHub License](https://img.shields.io/github/license/PastaLaPate/DIY_MovingHeadLight)
 ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues/PastaLaPate/DIY_MovingHeadLight)
 ![GitHub Issues or Pull Requests](https://img.shields.io/github/issues-pr/PastaLaPate/DIY_MovingHeadLight)
 ![GitHub top language](https://img.shields.io/github/languages/top/PastaLaPate/DIY_MovingHeadLight)
