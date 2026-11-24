@@ -2,4 +2,4 @@
 #include <ESPAsyncWebServer.h>
 #include <WiFi.h>
 
-void setupUDPManager(AsyncWebServer *server);
+void setupUDPManager();

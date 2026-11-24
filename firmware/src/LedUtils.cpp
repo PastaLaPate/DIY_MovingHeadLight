@@ -3,6 +3,10 @@
 
 enum EffectKind { FX_NONE, FX_FLICKER, FX_FADE };
 
+// Pins attached in setupLEDPWM(), needed by setColor() on cores where
+// ledcWrite() takes a pin instead of a channel (Arduino core >= 3).
+static int s_redPin = -1, s_greenPin = -1, s_bluePin = -1;
+
 static struct {
   EffectKind kind = FX_NONE;
   uint32_t startMs = 0;
@@ -26,6 +30,17 @@ static float applyEase(float p, FadeType t) {
 }
 
 void setupLEDPWM(int redPin, int greenPin, int bluePin) {
+  s_redPin = redPin;
+  s_greenPin = greenPin;
+  s_bluePin = bluePin;
+
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+  // Core 3.x: attach with explicit channels so we never collide with the
+  // channels ESP32Servo allocates (0-1)
+  ledcAttachChannel(redPin, PWM_FREQ, PWM_RESOLUTION, RED_CHANNEL);
+  ledcAttachChannel(greenPin, PWM_FREQ, PWM_RESOLUTION, GREEN_CHANNEL);
+  ledcAttachChannel(bluePin, PWM_FREQ, PWM_RESOLUTION, BLUE_CHANNEL);
+#else
   // Initialize LED PWM channels
   ledcSetup(RED_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
   ledcSetup(GREEN_CHANNEL, PWM_FREQ, PWM_RESOLUTION);
@@ -35,6 +50,7 @@ void setupLEDPWM(int redPin, int greenPin, int bluePin) {
   ledcAttachPin(redPin, RED_CHANNEL);
   ledcAttachPin(greenPin, GREEN_CHANNEL);
   ledcAttachPin(bluePin, BLUE_CHANNEL);
+#endif
 
   setColor(255, 0, 0);
   delay(1000); // Let capacitors charge up
@@ -44,9 +60,15 @@ void setupLEDPWM(int redPin, int greenPin, int bluePin) {
 }
 
 void setColor(int redValue, int greenValue, int blueValue) {
+#if ESP_ARDUINO_VERSION_MAJOR >= 3
+  ledcWrite(s_redPin, max(redValue, 15));
+  ledcWrite(s_greenPin, max(greenValue, 15));
+  ledcWrite(s_bluePin, max(blueValue, 25));
+#else
   ledcWrite(RED_CHANNEL, max(redValue, 15));
   ledcWrite(GREEN_CHANNEL, max(greenValue, 15));
   ledcWrite(BLUE_CHANNEL, max(blueValue, 25));
+#endif
 }
 
 void flicker(int redValue, int greenValue, int blueValue, int duration) {

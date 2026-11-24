@@ -75,13 +75,12 @@ static void handleUpdateBody(AsyncWebServerRequest *req, uint8_t *data,
 }
 
 String handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
-  String data_str = String(data, len);
-  int packetID = parse_packet(data_str);
-  if (packetID != -1) {
+  Command cmd;
+  if (parsePacket(String(data, len), cmd)) {
+    applyCommand(cmd);
     return "applied.";
-  } else {
-    return "format error.";
   }
+  return "format error.";
 }
 
 void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
@@ -91,15 +90,15 @@ void onWebSocketEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,
 
   switch (type) {
   case WS_EVT_CONNECT:
-    Serial.printf("WebSocket client #%u connected from %s\n", client->id(),
-                  client->remoteIP().toString().c_str());
+    Serial.printf("WebSocket client #%u connected from %s\n",
+                  (unsigned)client->id(), client->remoteIP().toString().c_str());
     resp["message"] = "Connected successfully";
     resp["clientId"] = String(client->id());
     serializeJson(resp, msg);
     client->text(msg);
     break;
   case WS_EVT_DISCONNECT:
-    Serial.printf("WebSocket client #%u disconnected\n", client->id());
+    Serial.printf("WebSocket client #%u disconnected\n", (unsigned)client->id());
     break;
   case WS_EVT_DATA:
     client->text(handleWebSocketMessage(arg, data, len));
@@ -164,9 +163,7 @@ void setupServer() {
 
   ws.onEvent(onWebSocketEvent);
   server.addHandler(&ws);
-  setupUDPManager(&server);
-
-  server.serveStatic("/", LittleFS, "/").setDefaultFile("index.html");
+  setupUDPManager();
 
   server.begin();
 }

@@ -1,7 +1,8 @@
 // ***** LED PWM Channel Configuration *****
-#define RED_CHANNEL 0
-#define GREEN_CHANNEL 1
-#define BLUE_CHANNEL 2
+// Channels 3-5: ESP32Servo grabs LEDC channels 0-1 first, keep clear of them
+#define RED_CHANNEL 3
+#define GREEN_CHANNEL 4
+#define BLUE_CHANNEL 5
 #define PWM_FREQ 2500
 #define PWM_RESOLUTION 8
 

@@ -2,7 +2,10 @@
 
 Packet:
 Packet_ID;args (in format key=value separated by ;)
-If the device receives an udp packet with an ID less than any previous packet receives, it will ignore it.
+The packet ID is only echoed back in the UDP ACK (`ACK:<Packet_ID>`).
+Packets are NOT filtered by ID: commands describe absolute state, so the last
+packet received always wins, no matter its ID. Resending the same packet (or
+the whole state periodically) is therefore always safe.
 
 Arguments:
 Servos:

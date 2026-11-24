@@ -1,26 +1,20 @@
 import queue
 import socket
 import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
 
 UDP_PORT = 1234
-HTTP_PORT = 8080
-
 
 class ControlServer:
-    """UDP + HTTP control server. Only enqueues commands; never touches GL."""
+    """UDP control server. Only enqueues commands; never touches GL."""
 
-    def __init__(self, udp_port=UDP_PORT, http_port=HTTP_PORT, host="0.0.0.0"):
+    def __init__(self, udp_port=UDP_PORT, host="0.0.0.0"):
         self.host = host
         self.udp_port = udp_port
-        self.http_port = http_port
         self.queue: queue.Queue = queue.Queue()
-        self.last_packet_id = 0
         self.received_any = False
 
     def start(self):
         threading.Thread(target=self._run_udp, daemon=True).start()
-        threading.Thread(target=self._run_http, daemon=True).start()
 
     # --- UDP ---------------------------------------------------
     def _run_udp(self):
@@ -43,9 +37,6 @@ class ControlServer:
                     packet_id = int(tokens[0])
                 except ValueError:
                     continue
-                if packet_id <= self.last_packet_id:
-                    continue
-                self.last_packet_id = packet_id
 
                 args = {}
                 for t in tokens[1:]:
@@ -94,28 +85,3 @@ class ControlServer:
             except Exception:
                 pass
 
-    # --- HTTP --------------------------------------------------
-    def _run_http(self):
-        outer = self
-
-        class Handler(BaseHTTPRequestHandler):
-            def do_POST(self):
-                if self.path != "/resetIndexCounter":
-                    self.send_response(404)
-                    self.end_headers()
-                    return
-                outer.last_packet_id = 0
-                self.send_response(200)
-                self.send_header("Content-Type", "text/plain")
-                self.end_headers()
-                self.wfile.write(b"Packet index counter reset.")
-
-            def log_message(self, format, *args):
-                return
-
-        try:
-            server = HTTPServer((self.host, self.http_port), Handler)
-            print(f"HTTP server listening on http://{self.host}:{self.http_port}")
-            server.serve_forever()
-        except Exception as e:
-            print("HTTP server failed:", e)
