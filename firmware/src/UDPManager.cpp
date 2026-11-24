@@ -14,21 +14,21 @@ void setupUDPManager() {
     Serial.print(":");
     Serial.println(UDP_PORT);
     udp.onPacket([](AsyncUDPPacket packet) {
-      Serial.print("Received UDP Packet from ");
-      Serial.print(packet.remoteIP());
-      Serial.print(" Data: ");
-      Serial.write(packet.data(), packet.length());
-      Serial.println();
+      LOGD("Received UDP Packet from %s Data: %.*s\n",
+           packet.remoteIP().toString().c_str(), (int)packet.length(),
+           (const char *)packet.data());
 
       // Copy exactly packet.length() bytes: the payload is not
       // NUL-terminated, so constructing from (char*) alone would
       // read past the buffer.
       String data((char *)packet.data(), packet.length());
 
+      // No ACK: the controller streams absolute state at a fixed frame
+      // rate and never reads the socket, so answering every packet would
+      // only add airtime. The packet ID is still validated for format.
       Command cmd;
       if (parsePacket(data, cmd)) {
         applyCommand(cmd);
-        packet.printf("ACK:%u", (unsigned)cmd.packetId);
       }
     });
   }

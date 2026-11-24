@@ -39,6 +39,9 @@ void setup() {
     MDNS.addService("http", "tcp", 80); // optional: advertises the web server
   }
   setColor(255, 255, 255);
+  // Latency: disable WiFi modem sleep. By default the radio dozes between
+  // DTIM beacons, which adds tens of ms of jitter to inbound packets.
+  WiFi.setSleep(false);
   Serial.println();
   Serial.print("Connected! Local Wifi IP address: ");
   Serial.println(WiFi.localIP());

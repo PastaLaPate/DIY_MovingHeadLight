@@ -46,11 +46,6 @@ class ControlServer:
 
                 self._parse_args(args)
                 self.received_any = True
-
-                try:
-                    sock.sendto(f"ACK:{packet_id}".encode(), addr)
-                except Exception:
-                    pass
             except Exception:
                 continue
 

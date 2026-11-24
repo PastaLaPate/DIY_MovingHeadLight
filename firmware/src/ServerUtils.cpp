@@ -120,6 +120,14 @@ void setupServer() {
     req->send(200, "text/html", ota_html);
   });
 
+  // Compatibility no-op: released Lightshow builds probe this endpoint to
+  // test the connection (it used to reset the packet-ID dedupe counter,
+  // which no longer exists — newer Lightshow probes GET /config instead).
+  server.on("/resetIndexCounter", HTTP_POST,
+            [](AsyncWebServerRequest *request) {
+              request->send(200, "text/plain", "OK (no-op)");
+            });
+
   server.on("/config", HTTP_GET, [](AsyncWebServerRequest *req) {
     JsonDocument doc;
 

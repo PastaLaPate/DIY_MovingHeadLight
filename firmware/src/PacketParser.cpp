@@ -120,34 +120,32 @@ bool parsePacket(const String &dataIn, Command &cmd) {
 
 void applyCommand(const Command &cmd) {
   if (cmd.hasBaseServo) {
-    Serial.printf("Base Servo Angle = %d\n", cmd.baseServoAngle);
+    LOGD("Base Servo Angle = %d\n", cmd.baseServoAngle);
     moveServo(BASE_SERVO_PIN, cmd.baseServoAngle);
   }
 
   if (cmd.hasTopServo) {
-    Serial.printf("Top Servo Angle = %d\n", cmd.topServoAngle);
+    LOGD("Top Servo Angle = %d\n", cmd.topServoAngle);
     moveServo(TOP_SERVO_PIN, cmd.topServoAngle);
   }
 
   if (cmd.hasRed && cmd.hasGreen && cmd.hasBlue) {
     switch (cmd.ledAction) {
     case LED_FLICKER:
-      Serial.printf("Flickering LED to RGB(%d, %d, %d) for %d ms\n", cmd.red,
-                    cmd.green, cmd.blue, cmd.flickerMs);
+      LOGD("Flickering LED to RGB(%d, %d, %d) for %d ms\n", cmd.red, cmd.green,
+           cmd.blue, cmd.flickerMs);
       flicker(cmd.red, cmd.green, cmd.blue, cmd.flickerMs);
       break;
     case LED_FADE:
-      Serial.printf("Fading LED from RGB(%d, %d, %d) to RGB(%d, %d, %d) over "
-                    "%d ms\n",
-                    cmd.fadeFrom[0], cmd.fadeFrom[1], cmd.fadeFrom[2], cmd.red,
-                    cmd.green, cmd.blue, cmd.fadeMs);
+      LOGD("Fading LED from RGB(%d, %d, %d) to RGB(%d, %d, %d) over %d ms\n",
+           cmd.fadeFrom[0], cmd.fadeFrom[1], cmd.fadeFrom[2], cmd.red,
+           cmd.green, cmd.blue, cmd.fadeMs);
       fadeToColor(cmd.fadeFrom[0], cmd.fadeFrom[1], cmd.fadeFrom[2], cmd.red,
                   cmd.green, cmd.blue, cmd.fadeMs, EASE_IN_QUART);
       break;
     default:
       cancelEffect();
-      Serial.printf("Setting LED to RGB(%d, %d, %d)\n", cmd.red, cmd.green,
-                    cmd.blue);
+      LOGD("Setting LED to RGB(%d, %d, %d)\n", cmd.red, cmd.green, cmd.blue);
       setColor(cmd.red, cmd.green, cmd.blue);
       break;
     }

@@ -1,7 +1,19 @@
 #pragma once
 
-#include "WString.h"
+#include <Arduino.h>
+
+#include <SETTINGS.h>
 #include <stdint.h>
+
+#include "WString.h"
+
+// Hot-path debug logging. When MH_DEBUG is off (see SETTINGS.h) the
+// arguments are never evaluated, so logging costs literally nothing.
+#ifdef MH_DEBUG
+#define LOGD(...) Serial.printf(__VA_ARGS__)
+#else
+#define LOGD(...) do {} while (0)
+#endif
 
 enum LedAction { LED_SET, LED_FLICKER, LED_FADE };
 

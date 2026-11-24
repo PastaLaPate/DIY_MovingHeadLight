@@ -2,10 +2,10 @@
 
 Packet:
 Packet_ID;args (in format key=value separated by ;)
-The packet ID is only echoed back in the UDP ACK (`ACK:<Packet_ID>`).
-Packets are NOT filtered by ID: commands describe absolute state, so the last
-packet received always wins, no matter its ID. Resending the same packet (or
-the whole state periodically) is therefore always safe.
+The packet ID is optional metadata: the device does not ACK, does not filter
+or reorder by ID. Commands describe absolute state, so the last packet
+received always wins. Controllers are expected to stream the full state at a
+fixed frame rate (e.g. 60 fps), which makes any lost packet self-healing.
 
 Arguments:
 Servos:
